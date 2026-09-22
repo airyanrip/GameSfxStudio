@@ -1,0 +1,8 @@
+# 배치 파일은 Windows 줄바꿈(CRLF)이어야 cmd 가 올바르게 실행한다
+*.bat text eol=crlf
+*.py  text eol=lf
+*.js  text eol=lf
+*.html text eol=lf
+*.css text eol=lf
+*.md  text eol=lf
+*.woff2 binary

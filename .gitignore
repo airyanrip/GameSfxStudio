@@ -1,0 +1,20 @@
+# 개인 데이터 / 실행 중 생기는 것
+data/
+projects/
+
+# 빌드 산출물 (exe는 GitHub Releases 로 배포)
+GameSfxStudio.exe
+app/build/
+app/dist/
+*.spec
+
+# 가상환경 / 캐시
+.venv/
+__pycache__/
+*.pyc
+
+# AI 엔진: 설치 도우미가 사용자 PC에 만드는 것 (수 GB) — 폴더 전체를 통째로 제외
+engine/sao/venv/
+engine/sao/model*/
+engine/sao/.engine_installed.json
+engine/sao/*.log

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GameSfxStudio</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23ff7a3d'/%3E%3Cpath d='M8 32h8l6-18 10 36 8-28 5 10h11' fill='none' stroke='white' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/assets/style.css">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="brand-icon">🔊</span>
+        <span class="brand-name">GameSfxStudio</span>
+      </div>
+      <div class="sidebar-header">
+        <h2 data-i18n="sidebar.projects">프로젝트</h2>
+      </div>
+      <ul id="project-list" class="project-list"></ul>
+      <div class="sidebar-actions">
+        <button id="new-project-btn" data-i18n="sidebar.newProject">+ 새 프로젝트</button>
+        <button id="delete-project-btn" class="danger" data-i18n="sidebar.delete">삭제</button>
+      </div>
+      <p class="dim sidebar-hint" data-i18n="sidebar.hint">프로젝트는 게임 하나(또는 효과음 묶음)입니다. 만든 소리를 저장하고 한꺼번에 내보낼 수 있어요.</p>
+    </aside>
+
+    <main class="main">
+      <div class="tabs top-tabs">
+        <button class="tab-btn active" data-toptab="workshop"><span class="tab-icon">🎛️</span><span data-i18n="tabs.workshop">효과음 작업실</span></button>
+        <button class="tab-btn" data-toptab="ai"><span class="tab-icon">🤖</span><span data-i18n="tabs.ai">AI·학습</span></button>
+        <button class="tab-btn" data-toptab="library"><span class="tab-icon">📚</span><span data-i18n="tabs.library">라이브러리</span></button>
+        <button class="tab-btn" data-toptab="settings"><span class="tab-icon">⚙️</span><span data-i18n="tabs.settings">설정</span></button>
+      </div>
+
+      <!-- ===== 효과음 작업실 ===== -->
+      <section id="toptab-workshop" class="toptab-panel active">
+        <div class="card">
+          <h3 class="card-title" data-i18n="quick.title">1. 시작할 소리 고르기</h3>
+          <div id="preset-grid" class="preset-grid"></div>
+
+          <div class="prompt-row">
+            <input id="prompt-text" type="text" data-i18n-placeholder="quick.promptPlaceholder" maxlength="120">
+            <button id="prompt-btn" data-i18n="quick.promptBtn">✨ 설명으로 만들기</button>
+          </div>
+          <p class="dim" id="prompt-note" data-i18n="quick.promptHint">예: "큰 폭발음", "짧은 동전 소리", "동굴 속 물방울", "heavy sword swing"</p>
+
+          <div class="btn-row tools-row">
+            <button id="random-btn" class="secondary" data-i18n="quick.random">🎲 랜덤 생성</button>
+            <span class="mutate-group">
+              <button id="mutate-btn" class="secondary" data-i18n="quick.mutate">🧬 변형</button>
+              <input type="range" id="mutate-amount" min="5" max="100" value="35" title="">
+              <span id="mutate-amount-value" class="dim">35%</span>
+            </span>
+            <button id="variations-btn" class="secondary" data-i18n="quick.variations">🎞️ 변형 8개 뽑기</button>
+            <button id="undo-btn" class="secondary" disabled data-i18n="quick.undo">↩ 되돌리기</button>
+          </div>
+        </div>
+
+        <div class="card player-card">
+          <h3 class="card-title" data-i18n="player.title">2. 듣고 확인하기</h3>
+          <div class="viz">
+            <canvas id="wave-canvas" class="viz-canvas wave"></canvas>
+            <canvas id="spec-canvas" class="viz-canvas spec"></canvas>
+          </div>
+          <div class="btn-row player-row">
+            <button id="play-btn" data-i18n="player.play">▶ 재생</button>
+            <button id="stop-btn" class="secondary" data-i18n="player.stop">⏹ 정지</button>
+            <label class="inline-check"><input type="checkbox" id="auto-preview" checked> <span data-i18n="player.auto">바꿀 때마다 자동 재생</span></label>
+            <span id="sound-info" class="dim sound-info"></span>
+          </div>
+          <div class="save-row">
+            <input id="sfx-name" type="text" maxlength="50" data-i18n-placeholder="player.namePlaceholder">
+            <button id="save-new-btn" data-i18n="player.saveNew">💾 프로젝트에 저장</button>
+            <button id="save-over-btn" class="secondary" style="display:none" data-i18n="player.saveOver">💾 덮어쓰기</button>
+            <button id="download-btn" class="secondary" data-i18n="player.download">⬇️ WAV 받기</button>
+          </div>
+          <div id="loaded-note" class="dim" style="display:none"></div>
+        </div>
+
+        <div id="variations-card" class="card" style="display:none">
+          <div class="card-head">
+            <h3 class="card-title" data-i18n="var.title">변형 후보</h3>
+            <button id="variations-close" class="small secondary" data-i18n="var.close">닫기</button>
+          </div>
+          <p class="dim" data-i18n="var.hint">마음에 드는 것을 골라 편집하거나 바로 저장하세요. 발걸음·타격처럼 같은 소리를 여러 벌 만들 때 좋아요.</p>
+          <div id="variations-grid" class="variations-grid"></div>
+        </div>
+
+        <div class="section-head">
+          <h3 class="card-title" data-i18n="layers.title">3. 소리 다듬기 — 레이어</h3>
+          <span class="btn-row" style="margin:0">
+            <button id="add-sample-btn" class="small secondary" data-i18n="layers.addSample">📎 소리 파일을 레이어로</button>
+            <button id="add-layer-btn" class="small" data-i18n="layers.add">+ 레이어 추가</button>
+          </span>
+          <input type="file" id="sample-file" accept="audio/*,video/mp4,video/*,.wav,.mp3,.ogg,.flac,.m4a,.mp4,.m4v" style="display:none">
+        </div>
+        <p class="dim" data-i18n="layers.hint">효과음은 여러 소리 층(레이어)을 겹친 것입니다. 예: 폭발 = 낮은 울림 + 노이즈 + 타격음.</p>
+        <div id="layers" class="layers"></div>
+
+        <div class="card master-card">
+          <h3 class="card-title" data-i18n="master.title">4. 전체 마무리 (마스터)</h3>
+          <div id="master-params" class="param-groups"></div>
+        </div>
+      </section>
+
+
+      <!-- ===== AI · 학습 ===== -->
+      <section id="toptab-ai" class="toptab-panel">
+        <div class="card">
+          <h3 class="card-title" data-i18n="ai.title">🤖 AI로 진짜 같은 효과음 만들기</h3>
+          <div id="ai-status" class="ai-status"></div>
+          <div class="ai-model-row">
+            <label><span data-i18n="ai.model">모델</span>
+              <select id="ai-model"></select></label>
+          </div>
+          <div id="ai-license-note" class="ai-license-note"></div>
+          <div id="ai-recipes" class="preset-row"></div>
+          <div class="ai-form">
+            <label><span data-i18n="ai.env">공간</span>
+              <select id="ai-env"></select></label>
+            <label><span data-i18n="ai.distance">거리</span>
+              <select id="ai-distance"></select></label>
+            <label><span data-i18n="ai.quality">품질</span>
+              <select id="ai-quality">
+                <option value="40" data-i18n="ai.qFast">빠름 (40스텝)</option>
+                <option value="80" selected data-i18n="ai.qNormal">표준 (80스텝)</option>
+                <option value="150" data-i18n="ai.qHigh">고품질 (150스텝)</option>
+              </select></label>
+            <label><span data-i18n="ai.count">후보 개수</span>
+              <select id="ai-count"><option>1</option><option selected>2</option><option>3</option><option>4</option></select></label>
+            <label><span data-i18n="ai.seconds">길이(초)</span>
+              <input id="ai-seconds" type="number" min="0.5" max="12" step="0.5" value="3"></label>
+          </div>
+          <input id="ai-extra" type="text" maxlength="300" data-i18n-placeholder="ai.extraPlaceholder">
+          <details class="ai-adv"><summary data-i18n="ai.advanced">고급: 영어 프롬프트 직접 쓰기</summary>
+            <input id="ai-prompt" type="text" maxlength="400" data-i18n-placeholder="ai.promptPlaceholder">
+            <p class="dim" data-i18n="ai.promptHint">비워두면 위에서 고른 종류·공간·거리·설명으로 자동 조립합니다.</p>
+          </details>
+          <div class="btn-row">
+            <button id="ai-generate-btn" data-i18n="ai.generate">✨ 생성</button>
+            <button id="ai-stop-btn" class="secondary" data-i18n="ai.stop">⏻ AI 끄기(VRAM 반환)</button>
+            <label class="inline-check"><input type="checkbox" id="ai-boost" checked> <span data-i18n="ai.boost">합성 저음·타격 보강 추가</span></label>
+            <span id="ai-progress-text" class="dim"></span>
+          </div>
+          <div class="progress" id="ai-progress" style="display:none"><div class="progress-fill" id="ai-progress-fill"></div></div>
+          <p class="dim" id="ai-prompt-used"></p>
+          <div id="ai-results" class="ai-results"></div>
+        </div>
+
+        <div class="card">
+          <h3 class="card-title" data-i18n="learn.title">🎓 참고 음원에서 배우기</h3>
+          <p class="dim" data-i18n="learn.note">라이선스가 있는 소리(직접 녹음·구매한 라이브러리)를 넣으면 에너지 곡선·스펙트럼·저음·잔향을 분석해 닮은 합성 소리를 자동으로 맞춥니다. 같은 계열을 여러 개 배우면 '내 프리셋' 그룹이 되어 매번 조금씩 다른 소리를 뽑을 수 있어요. 원작 게임 음원 등 사용 권한이 없는 소리는 넣지 마세요.</p>
+          <div class="ai-form">
+            <label><span data-i18n="learn.group">그룹 이름</span>
+              <input id="learn-group" type="text" maxlength="50" data-i18n-placeholder="learn.groupPlaceholder"></label>
+            <label><span data-i18n="learn.budget">맞추는 시간</span>
+              <select id="learn-budget"><option value="10" data-i18n="learn.bFast">빠르게 (10초)</option><option value="25" selected data-i18n="learn.bNormal">보통 (25초)</option><option value="50" data-i18n="learn.bSlow">정밀하게 (50초)</option></select></label>
+          </div>
+          <div class="btn-row">
+            <button id="learn-btn" data-i18n="learn.pick">📂 참고 음원 고르기 (여러 개 가능)</button>
+            <span id="learn-status" class="dim"></span>
+          </div>
+          <input type="file" id="learn-files" multiple accept="audio/*,video/mp4,video/*,.wav,.mp3,.ogg,.flac,.m4a,.mp4,.m4v" style="display:none">
+          <div class="progress" id="learn-progress" style="display:none"><div class="progress-fill" id="learn-progress-fill"></div></div>
+          <div id="learn-results" class="ai-results"></div>
+        </div>
+      </section>
+
+      <!-- ===== 라이브러리 ===== -->
+      <section id="toptab-library" class="toptab-panel">
+        <div id="library-empty" class="empty-state">
+          <div class="empty-state-icon">📚</div>
+          <div data-i18n="library.empty">왼쪽에서 프로젝트를 선택하거나 새로 만드세요.</div>
+        </div>
+        <div id="library-panel" style="display:none">
+          <div class="card">
+            <h3 class="card-title" id="library-title"></h3>
+            <label data-i18n="library.description">메모</label>
+            <input id="project-description" type="text" maxlength="200" data-i18n-placeholder="library.descriptionPlaceholder">
+            <label data-i18n="library.exportDir">내보낼 폴더 (예: Unity 프로젝트의 Assets\Audio\SFX)</label>
+            <input id="project-export-dir" type="text" data-i18n-placeholder="library.exportDirPlaceholder">
+            <div class="btn-row">
+              <button id="export-btn" data-i18n="library.export">📦 폴더로 내보내기</button>
+              <button id="open-folder-btn" class="secondary" data-i18n="library.openFolder">📂 폴더 열기</button>
+              <a id="export-zip-link" class="btn-link secondary" data-i18n="library.zip">🗜️ ZIP으로 받기</a>
+            </div>
+            <span id="export-status" class="dim"></span>
+          </div>
+          <h3 data-i18n="library.listHeading">저장된 효과음</h3>
+          <ul id="sound-list" class="sound-list"></ul>
+        </div>
+      </section>
+
+      <!-- ===== 설정 ===== -->
+      <section id="toptab-settings" class="toptab-panel">
+        <h3 data-i18n="settings.title" style="margin-top:0">⚙️ 설정</h3>
+
+        <div class="card settings-card">
+          <h3 data-i18n="settings.languageHeading" style="margin-top:0">🌐 언어</h3>
+          <div class="lang-picker" id="lang-picker">
+            <button type="button" class="lang-btn" data-lang="ko">한국어</button>
+            <button type="button" class="lang-btn" data-lang="en">English</button>
+          </div>
+        </div>
+
+        <div class="card settings-card">
+          <h3 data-i18n="settings.soundHeading" style="margin-top:0">🔊 소리</h3>
+          <label data-i18n="settings.sampleRate">저장·내보내기 샘플레이트</label>
+          <div class="lang-picker" id="rate-picker"></div>
+          <p class="dim" data-i18n="settings.sampleRateHint">44.1kHz 16bit 모노 WAV가 Unity·Godot 등에서 가장 무난합니다. 값이 낮으면 용량이 줄고 고음이 깎여요.</p>
+
+          <label data-i18n="settings.previewVolume" style="margin-top:16px">미리듣기 볼륨</label>
+          <div class="slider-row">
+            <input type="range" id="preview-volume-slider" min="0" max="1.0" step="0.05" value="0.8">
+            <span id="preview-volume-value" class="dim">80%</span>
+          </div>
+          <label class="inline-check" style="margin-top:12px"><input type="checkbox" id="auto-preview-setting"> <span data-i18n="settings.autoPreview">값을 바꿀 때마다 자동으로 다시 재생</span></label>
+        </div>
+
+
+        <div class="card settings-card">
+          <h3 data-i18n="setup.settingsHeading" style="margin-top:0">🧰 설치 도우미</h3>
+          <p class="dim" data-i18n="setup.settingsDesc">AI 엔진 설치 상태를 확인하고 자동으로 설치합니다. 처음 실행 때 한 번 자동으로 열립니다.</p>
+          <button type="button" id="open-setup-btn" class="small" data-i18n="setup.open">설치 도우미 열기</button>
+        </div>
+
+        <div class="card settings-card">
+          <h3 data-i18n="settings.aiHeading" style="margin-top:0">🤖 AI 모델 (Stable Audio Open)</h3>
+          <p class="dim" data-i18n="settings.aiIntro">모델을 골라 내려받으세요. 내려받은 모델은 AI 탭에서 선택해 씁니다. 두 모델은 라이선스가 다릅니다.</p>
+          <div id="ai-models-list" class="ai-models-list"></div>
+          <div id="ai-token-row" style="display:none">
+            <p class="dim" data-i18n="settings.aiSteps">Stable Audio Open: ① 위 링크에서 HuggingFace 무료 계정으로 로그인해 라이선스에 동의 → ② Settings › Access Tokens 에서 Read 토큰 생성 → ③ 아래에 붙여넣고 내려받기. 토큰은 저장되지 않습니다.</p>
+            <input id="ai-token" type="password" autocomplete="off" placeholder="hf_..." style="width:100%;padding:9px 11px;margin:4px 0 8px;background:var(--panel-2);border:1px solid var(--border);border-radius:8px;color:var(--text)">
+          </div>
+        </div>
+
+        <div class="card settings-card">
+          <h3 data-i18n="settings.cacheHeading" style="margin-top:0">🧹 저장공간 정리</h3>
+          <p class="dim" id="browser-cache-info" data-i18n="settings.browserCacheInfo">프로그램 창(브라우저) 캐시: -</p>
+          <p class="dim" data-i18n="settings.resetBrowserCacheHint">프로그램이 실행 중일 때는 지울 수 없어서, 다음에 프로그램을 새로 켤 때 자동으로 지워지도록 예약합니다.</p>
+          <button type="button" id="reset-browser-cache-btn" class="small secondary" data-i18n="settings.resetBrowserCacheBtn">다음 실행 시 초기화 예약</button>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="setup-modal" class="modal" style="display:none">
+    <div class="modal-box wide">
+      <div class="modal-title" data-i18n="setup.title">🧰 처음 설치 도우미</div>
+      <div id="setup-body"></div>
+      <div class="btn-row modal-actions"><button id="setup-close" class="secondary" data-i18n="setup.close">닫기 (나중에 설정에서 다시 열 수 있어요)</button></div>
+    </div>
+  </div>
+  <div id="modal" class="modal" style="display:none">
+    <div class="modal-box">
+      <div id="modal-title" class="modal-title"></div>
+      <div id="modal-body"></div>
+      <input id="modal-input" type="text" style="display:none">
+      <div class="btn-row modal-actions">
+        <button id="modal-ok"></button>
+        <button id="modal-cancel" class="secondary"></button>
+      </div>
+    </div>
+  </div>
+  <div id="toast" class="toast"></div>
+
+  <script src="/assets/i18n.js"></script>
+  <script src="/assets/app.js"></script>
+  <script src="/assets/ai.js"></script>
+  <script src="/assets/setup.js"></script>
+</body>
+</html>
