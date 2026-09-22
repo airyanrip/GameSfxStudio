@@ -125,6 +125,6 @@ GameSfxStudio/
 - 화면 언어는 한국어/English.
 
 ## 라이선스 / 크레딧
-- 이 저장소의 **코드 라이선스는 아직 지정되지 않았습니다**(지정 전까지 모든 권리는 저작자에게 있습니다). 공개·재사용을 원하면 LICENSE 를 추가하세요.
-- 화면 폰트: [Galmuri](https://github.com/quiple/galmuri)(SIL OFL 1.1, `app/static/fonts/LICENSE.txt`)
-- AI 모델: [Stable Audio Open 1.0](https://huggingface.co/stabilityai/stable-audio-open-1.0)(Stability AI Community License), [AudioLDM2-large](https://huggingface.co/cvssp/audioldm2-large)(CC BY-NC-SA 4.0, 비상업)
+- 이 저장소의 **코드는 MIT 라이선스**입니다(`LICENSE`). 자유롭게 쓰고, 고치고, 다시 배포해도 되며 출처만 남기면 됩니다.
+- 화면 폰트: [Galmuri](https://github.com/quiple/galmuri)(SIL OFL 1.1, `app/static/fonts/LICENSE.txt`) — MIT 범위에 포함되지 않는 별도 라이선스입니다.
+- AI 모델(직접 배포하지 않고 사용자가 내려받음): [Stable Audio Open 1.0](https://huggingface.co/stabilityai/stable-audio-open-1.0)(Stability AI Community License), [AudioLDM2-large](https://huggingface.co/cvssp/audioldm2-large)(CC BY-NC-SA 4.0, 비상업) — 각 모델의 사용 조건은 해당 라이선스를 따르며, 이 저장소의 MIT 라이선스와 무관합니다.
