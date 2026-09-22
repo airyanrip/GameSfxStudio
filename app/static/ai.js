@@ -146,7 +146,9 @@ let aiPollTimer = null;
 let modelSelectBuilt = false;
 
 const aiModel = (id) => (aiState ? aiState.models.find((m) => m.id === id) : null);
-const selectedModelId = () => $('#ai-model').value || 'sao';
+// 상태를 아직 못 불러왔거나 선택 상자가 비어 있으면 특정 모델(예: 유료/미설치 모델)로 함부로 단정하지 않고 빈 값을 돌려준다.
+// (과거 버그: 여기서 'sao'로 기본값을 잡아서, 상태 로딩 중 생성 버튼을 누르면 미설치 모델로 요청이 나가 API 오류가 났다.)
+const selectedModelId = () => $('#ai-model').value || '';
 
 async function loadAiStatus() {
   try { aiState = await apiJson('/api/ai/status'); } catch (e) { return; }
@@ -309,8 +311,15 @@ async function drawSampleCanvas(canvas, id) {
 let aiBusy = false;
 $('#ai-generate-btn').onclick = async () => {
   if (aiBusy) return;
+  const modelId = selectedModelId();
+  const model = aiModel(modelId);
+  if (!model || !model.ready) {
+    // AI 상태를 아직 못 불러왔거나(막 탭을 연 직후) 모델이 준비되지 않은 상태 — 서버에 묻지 않고 여기서 막는다.
+    toast(t('ai.modelNotReady', { name: model ? model.name : '...' }), true);
+    return;
+  }
   const body = {
-    model: selectedModelId(), recipe: aiSelected, env: $('#ai-env').value, distance: $('#ai-distance').value, extra: $('#ai-extra').value,
+    model: modelId, recipe: aiSelected, env: $('#ai-env').value, distance: $('#ai-distance').value, extra: $('#ai-extra').value,
     prompt: $('#ai-prompt').value, seconds: parseFloat($('#ai-seconds').value) || 3, steps: parseInt($('#ai-quality').value, 10),
     count: parseInt($('#ai-count').value, 10), seed: 0,
   };

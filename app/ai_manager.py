@@ -58,8 +58,12 @@ class AIManager:
         return self.mock or (self.dir / MODELS[model]["dir"] / "model_index.json").exists()
 
     def _worker_status(self) -> dict | None:
+        # 워커가 안 떠 있는 게 보통이라 이 호출은 거의 항상 '거부'로 끝난다. 일부 PC(보안 소프트웨어·VPN이
+        # 루프백 연결을 가로채는 환경)에서는 닫힌 포트로의 연결이 실패하기까지 1~2초씩 걸려, 짧은 타임아웃을
+        # 걸어 두지 않으면 /api/ai/status 응답 자체가 그만큼 느려진다(화면에서 상태 로딩 중 생성 버튼을
+        # 누르면 API 오류가 나던 문제의 원인이었다). 워커가 실제로 떠 있으면 로컬 응답은 수 ms면 충분하다.
         try:
-            with urllib.request.urlopen(BASE + "/status", timeout=1.5) as r:
+            with urllib.request.urlopen(BASE + "/status", timeout=0.3) as r:
                 return json.loads(r.read())
         except (OSError, ValueError):
             return None
